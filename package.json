@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@react-spring/web": "^10.0.1",
+    "react-resizable": "^3.0.5",
+    "use-debounce": "^10.0.5"
+  },
+  "devDependencies": {
+    "@types/react-resizable": "^3.0.8"
+  }
+}
