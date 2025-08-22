@@ -11,16 +11,26 @@ from fastapi import Depends, Header, HTTPException
 from jose import jwt
 from jwt import PyJWKClient
 from sqlalchemy import text
+from typing import Optional
 
 from .database import get_db
 
 
-# ────────────────────────────────────────────
-# JWT helpers
-# ────────────────────────────────────────────
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-JWKS_URL     = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
-_jwk_client  = PyJWKClient(JWKS_URL)
+
+# Demo switch
+DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+
+
+# Make these lazy/optional so demo mode doesn’t require them.
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+if SUPABASE_URL:
+    JWKS_URL    = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+    _jwk_client = PyJWKClient(JWKS_URL)
+else:
+    JWKS_URL    = None
+    _jwk_client = None
+
+
 
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
@@ -111,62 +121,19 @@ def _classify_roles(db, email: str) -> dict:
 # ────────────────────────────────────────────
 # Main dependency & fine-grained guards
 # ────────────────────────────────────────────
-def require_user(authorization: str | None = Header(None)):
+def require_user(authorization: Optional[str] = Header(None)):
     """
-    • Verifies JWT
-    • Classifies roles
-    • Rejects pure creatives for manager API
-    • Back-fills `supabase_uid` where missing
+    DEMO MODE: return a fake 'manager/admin' user and skip all checks.
     """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Missing or invalid Authorization header")
-
-    token = authorization.split(" ", 1)[1]
-    try:
-        claims = _decode_supabase_jwt(token)
-    except Exception:
-        raise HTTPException(401, "Invalid token")
-
-    email = (claims.get("email") or "").lower()
-    sub   = claims.get("sub")            # Supabase user UUID
-    if not email or not sub:
-        raise HTTPException(401, "Invalid token claims")
-
-    db = next(get_db())
-    try:
-        info        = _classify_roles(db, email)
-        roles       = info["roles"]
-        team_row    = info["team_row"]
-        creative_row = info["creative_row"]
-
-        # Manager backend blocks “creative-only” users.
-        if roles == {"creative"} or not roles:
-            raise HTTPException(403, "Not allowed")
-
-        # Upsert supabase_uid where missing
-        if team_row and not team_row.supabase_uid:
-            db.execute(
-                text("UPDATE team SET supabase_uid=:uid WHERE id=:id"),
-                {"uid": sub, "id": team_row.id},
-            )
-            db.commit()
-        if creative_row and not creative_row.supabase_uid:
-            db.execute(
-                text("UPDATE creatives SET supabase_uid=:uid WHERE id=:id"),
-                {"uid": sub, "id": creative_row.id},
-            )
-            db.commit()
-
+    if DEMO_MODE:
         return {
-            "email"      : email,
-            "user_id"    : sub,
-            "roles"      : sorted(roles),
-            "team_id"    : getattr(team_row, "id", None),
-            "creative_id": getattr(creative_row, "id", None),
-            "is_admin"   : "admin" in roles,
+            "email": "demo@local",
+            "user_id": "demo-user",
+            "roles": ["admin", "manager", "team"],
+            "team_id": None,
+            "creative_id": None,
+            "is_admin": True,
         }
-    finally:
-        db.close()
 
 
 # --------- convenience guards ----------

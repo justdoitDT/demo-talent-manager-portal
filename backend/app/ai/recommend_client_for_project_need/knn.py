@@ -4,11 +4,11 @@ from sqlalchemy import text
 
 SQL = text("""
 SELECT ce.creative_id,
-       COALESCE(1 - (ce.embedding <=> ne.embedding), 0.0) AS sim
-FROM client_embeddings ce
+       COALESCE(1 - (ce.embed <=> ne.embedding), 0.0) AS sim
+FROM creative_embeddings ce
 JOIN need_embeddings ne ON ne.need_id = :need_id
 WHERE ce.creative_id = ANY(:ids)
-ORDER BY ce.embedding <=> ne.embedding
+ORDER BY ce.embed <=> ne.embedding
 LIMIT 200
 """)
 

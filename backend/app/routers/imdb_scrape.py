@@ -5,7 +5,7 @@ import json
 import re
 import time
 from collections import Counter
-from typing import Iterator
+from typing import Iterator, Callable, Optional, Any, Dict
 import traceback
 
 import requests
@@ -415,103 +415,142 @@ def _upsert_tags_and_link(db: Session, project_id: str, tag_names: list[str]) ->
     db.execute(ins_link, [{"pid": project_id, "tid": tid} for tid in tag_ids])
 
 
+
+def sync_creative_credits(
+    db: Session,
+    creative_id: str,
+    imdb_id: str,
+    *,
+    sleep: float = 0.3,
+    progress: Optional[Callable[[dict], None]] = None,  # ← FIXED
+) -> Dict[str, Any]:
+    """
+    Scrape all credits for one creative (by nm id) and persist:
+      - projects (insert/update)
+      - creative_project_roles (idempotent)
+      - genre tags (idempotent)
+    Returns a summary dict. Raises on fatal errors. Commits per title.
+    """
+    name_url = f"https://www.imdb.com/name/{imdb_id}/"
+
+    if progress: progress({"type": "init", "nm_id": imdb_id})
+
+    credits = _scrape_filmography(name_url)
+    credits = list({(t, r): (t, u, r) for t, u, r in credits}.values())  # dedupe (tt, role)
+    role_counts = Counter(r for _, _, r in credits)
+    total = len(credits)
+    if progress: progress({"type": "plan", "total": total, "role_counts": dict(role_counts)})
+
+    ok = err = 0
+    start = time.monotonic()
+
+    for i, (tt, url, role) in enumerate(credits, start=1):
+        status = "OK"
+        title_for_log = tt
+        try:
+            meta = _title_meta(url)
+            title_for_log = meta.get("title") or tt
+
+            pid, is_new = _upsert_project(db, tt, meta)
+            _link_role(db, creative_id, pid, role)
+            if is_new and meta.get("tags"):
+                _upsert_tags_and_link(db, pid, meta["tags"])
+
+            db.commit()
+            ok += 1
+            status = "NEW" if is_new else "OK"
+        except Exception as e:
+            db.rollback()
+            err += 1
+            status = "ERR"
+            if progress:
+                progress({
+                    "type": "log",
+                    "message": f"⚠ {tt} ({role}) — {type(e).__name__}: {e}",
+                })
+
+        if progress:
+            elapsed_ms = int((time.monotonic() - start) * 1000)
+            progress({
+                "type": "progress",
+                "i": i, "total": total, "ok": ok, "err": err,
+                "elapsed_ms": elapsed_ms, "title": title_for_log, "role": role, "status": status,
+            })
+
+        time.sleep(sleep)
+
+    summary = {
+        "type": "done",
+        "total": total,
+        "ok": ok,
+        "err": err,
+        "elapsed_ms": int((time.monotonic() - start) * 1000),
+        "role_counts": dict(role_counts),
+    }
+    if progress: progress(summary)
+    return summary
+
+
+
 # ───────────────────────────── Endpoint ─────────────────────────────
-@router.get(
-    "/{creative_id}/scrape_imdb/stream",
-    dependencies=[Depends(require_writer)],
-)
+@router.get("/{creative_id}/scrape_imdb/stream", dependencies=[Depends(require_writer)])
 def scrape_imdb_stream(creative_id: str):
-    """
-    Stream progress while scraping all credits from the creative's IMDb page.
-    """
     def gen() -> Iterator[bytes]:
-        # Open a fresh Session that lives for the entire stream
         db = next(get_db())
         try:
             C = models.Creative
             creative = db.query(C).get(creative_id)
             if not creative:
-                yield _sse("error", {"type": "error", "message": "Creative not found"})
-                return
+                yield _sse("error", {"type": "error", "message": "Creative not found"}); return
             if not creative.imdb_id:
-                yield _sse("error", {"type": "error", "message": "Creative has no IMDb ID on file"})
-                return
+                yield _sse("error", {"type": "error", "message": "Creative has no IMDb ID on file"}); return
 
-            nm_id = creative.imdb_id
-            name_url = f"https://www.imdb.com/name/{nm_id}/"
+            # tell the client who we're working on
+            yield _sse("init", {"type": "init", "creativeName": creative.name, "nm_id": creative.imdb_id})
 
-            start = time.monotonic()
-            yield _sse("init", {"type": "init", "creativeName": creative.name, "nm_id": nm_id})
+            # bridge progress events → SSE frames
+            def on_progress(ev: dict):
+                etype = ev.get("type") or "message"
+                yield_bytes = _sse(etype, ev)
+                # Python generator trick to push bytes out of inner callback:
+                nonlocal _last_chunk
+                _last_chunk = yield_bytes
 
-            try:
-                credits = _scrape_filmography(name_url)
-            except Exception as e:
-                yield _sse("error", {"type": "error", "message": f"Failed to fetch filmography: {type(e).__name__}: {e}"})
-                return
+            # run the sync, emitting SSE
+            _last_chunk = None
+            def pump(ev):
+                nonlocal _last_chunk
+                for _ in (): pass  # no-op to keep closure happy
+                on_progress(ev)
+                if _last_chunk:   # send chunk
+                    chunk = _last_chunk; _last_chunk = None
+                    return chunk
 
-            # Dedupe (tt, role) pairs and plan
-            credits = list({(t, r): (t, u, r) for t, u, r in credits}.values())
-            role_counts = Counter(r for _, _, r in credits)
-            total = len(credits)
-            yield _sse("plan", {"type": "plan", "total": total, "role_counts": dict(role_counts)})
+            # call the helper and stream its events
+            def proxy(ev):
+                b = pump(ev)
+                if b: 
+                    return b
 
-            ok = err = 0
-            for i, (tt, url, role) in enumerate(credits, start=1):
-                title_for_log = tt
-                status = "OK"
-                try:
-                    meta = _title_meta(url)
-                    title_for_log = meta.get("title") or tt
+            # drive the helper, manually yielding bytes
+            def run_and_stream():
+                out = None
+                def cb(ev):
+                    b = pump(ev)
+                    if b: chunks.append(b)
 
-                    pid, is_new = _upsert_project(db, tt, meta)
-                    _link_role(db, creative_id, pid, role)
+                chunks = []
+                out = sync_creative_credits(db, creative.id, creative.imdb_id, progress=cb)
+                return chunks, out
 
-                    if is_new and meta.get("tags"):
-                        _upsert_tags_and_link(db, pid, meta["tags"])
+            chunks, _ = run_and_stream()
+            for c in chunks:
+                yield c
 
-                    db.commit()
-                    ok += 1
-                    status = "NEW" if is_new else "OK"
-                except Exception as e:
-                    db.rollback()
-                    err += 1
-                    status = "ERR"
-                    yield _sse("log", {
-                        "type": "log",
-                        "message": f"⚠ {tt} ({role}) — {type(e).__name__}: {e}\n{traceback.format_exc(limit=1)}",
-                    })
-
-                elapsed_ms = int((time.monotonic() - start) * 1000)
-                avg_ms = elapsed_ms / max(i, 1)
-                eta_ms = int(avg_ms * (total - i))
-
-                yield _sse("progress", {
-                    "type": "progress",
-                    "i": i, "total": total, "ok": ok, "err": err,
-                    "remaining": total - i, "eta_ms": eta_ms, "elapsed_ms": elapsed_ms,
-                    "title": title_for_log, "role": role, "status": status,
-                })
-
-                time.sleep(0.3)  # politeness
-
-            yield _sse("done", {
-                "type": "done",
-                "total": total, "ok": ok, "err": err,
-                "elapsed_ms": int((time.monotonic() - start) * 1000),
-                "role_counts": dict(role_counts),
-            })
         finally:
-            try:
-                db.close()
-            except Exception:
-                pass
+            try: db.close()
+            except: pass
 
-    return StreamingResponse(
-        gen(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
-        },
-    )
+    return StreamingResponse(gen(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive",
+    })

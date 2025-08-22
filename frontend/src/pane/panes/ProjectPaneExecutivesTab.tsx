@@ -7,7 +7,7 @@ import { usePane, PanePayload } from '../PaneContext';
 /* ─────────── Types ─────────── */
 type CompanyType = 'tv_network' | 'studio' | 'production_company';
 
-interface CompanyMini { id: string; name: string }
+interface CompanyMini { id: string; name: string; status?: 'Active' | 'Archived' | string }
 interface ExecutiveRead {
   id: string;
   name: string;
@@ -363,18 +363,22 @@ export default function ProjectPaneExecutivesTab({
         if (!mounted) return;
 
         const mapped: ExecutiveRow[] = execResp.data.map(e => {
-          const ids: string[] = [];
+          const ids: string[]   = [];
           const names: string[] = [];
-          const types: CompanyType[] = [];
-          const pushMany = (list: CompanyMini[], t: CompanyType) => {
-            if (list?.length) {
-              list.forEach(c => { ids.push(c.id); names.push(c.name); });
-              types.push(t);
-            }
-          };
-          pushMany(e.tv_networks || [], 'tv_network');
-          pushMany(e.studios || [], 'studio');
-          pushMany(e.production_companies || [], 'production_company');
+          const typesSet = new Set<CompanyType>();
+          const isActive = (c: CompanyMini) => !c.status || c.status === 'Active';
+
+          const tv  = (e.tv_networks || []).filter(isActive);
+          const st  = (e.studios || []).filter(isActive);
+          const pc  = (e.production_companies || []).filter(isActive);
+
+          tv.forEach(c => { ids.push(c.id); names.push(c.name); });
+          st.forEach(c => { ids.push(c.id); names.push(c.name); });
+          pc.forEach(c => { ids.push(c.id); names.push(c.name); });
+
+          if (tv.length) typesSet.add('tv_network');
+          if (st.length) typesSet.add('studio');
+          if (pc.length) typesSet.add('production_company');
 
           // de-dup companies by id while keeping order
           const seen = new Set<string>();
@@ -389,17 +393,19 @@ export default function ProjectPaneExecutivesTab({
             executive_name: e.name,
             company_ids: dedupIds,
             company_names: dedupNames,
-            company_types: Array.from(new Set(types)),
+            company_types: Array.from(typesSet),
           };
         });
 
         setRows(mapped);
 
+        // Only keep companies attached to this project that are Active
+        const isActive = (c: CompanyMini) => !c.status || c.status === 'Active';
         const pc = [
-          ...(projCoResp.data.networks || []),
-          ...(projCoResp.data.studios  || []),
-          ...(projCoResp.data.prodcos  || []),
-        ];
+          ...(projCoResp.data.networks || []).filter(isActive),
+          ...(projCoResp.data.studios  || []).filter(isActive),
+          ...(projCoResp.data.prodcos  || []).filter(isActive),
+        ].sort((a,b)=>a.name.localeCompare(b.name));
         setProjectCompanies(pc);
       } finally {
         if (mounted) setLoading(false);

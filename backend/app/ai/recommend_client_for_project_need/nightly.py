@@ -31,12 +31,12 @@ JOIN survey_responses sr ON sr.survey_id = s.id
 WHERE s.creative_id = :cid
 """)
 UPSERT = text("""
-INSERT INTO client_embeddings(creative_id, embedding, source_version)
-VALUES (:cid, :emb, :ver)
+INSERT INTO creative_embeddings (creative_id, embed, profile_text)
+VALUES (:cid, :emb, :ptxt)
 ON CONFLICT (creative_id) DO UPDATE SET
-  embedding = EXCLUDED.embedding,
-  source_version = EXCLUDED.source_version,
-  updated_at = now()
+  embed        = EXCLUDED.embed,
+  profile_text = EXCLUDED.profile_text,
+  updated_at   = now()
 """)
 
 def _w(inv, it):
@@ -46,8 +46,13 @@ def _w(inv, it):
     # new weighting rule: involvement * interest^2
     return float(inv) * (float(it) ** 2)
 
-def rebuild_client_embeddings(db, version="local-stub@1536"):
-    client_ids = [r[0] for r in db.execute(Q_CLIENTS).fetchall()]
+def rebuild_client_embeddings(db, creative_ids: list[str] | None = None):
+    # If creative_ids is None, process all current clients; else just the provided list
+    if creative_ids is None:
+        client_ids = [r[0] for r in db.execute(Q_CLIENTS).fetchall()]
+    else:
+        client_ids = list(creative_ids)
+
     for cid in client_ids:
         credits = db.execute(Q_CREDITS, {"cid": cid}).fetchall()
         lines, wts = [], []
@@ -58,21 +63,36 @@ def rebuild_client_embeddings(db, version="local-stub@1536"):
             wts.append(_w(inv, it))
 
         interests = [r[0] for r in db.execute(Q_INTERESTS, {"cid": cid}).fetchall()]
+
+        # ——— build embedding ———
         parts, pweights = [], []
         if lines:
             ev = embed_texts(lines)
             wsum = max(sum(wts), 1e-9)
-            cred_vec = sum((w*v for w, v in zip(wts, ev))) / wsum
+            cred_vec = sum((w * v for w, v in zip(wts, ev))) / wsum
             parts.append(cred_vec); pweights.append(0.8)
         if interests:
             e2 = embed_texts(["\n".join(interests)])[0]
             parts.append(e2); pweights.append(0.2)
 
         if parts:
-            vec = sum((w*np.array(v) for w, v in zip(pweights, parts)))
-            n = np.linalg.norm(vec); vec = (vec / n).tolist() if n > 0 else vec.tolist()
+            import numpy as np
+            vec = sum((w * np.array(v) for w, v in zip(pweights, parts)))
+            n = np.linalg.norm(vec)
+            vec = (vec / n).tolist() if n > 0 else vec.tolist()
         else:
-            vec = [0.0]*EMBED_DIM
+            from .embeddings import EMBED_DIM
+            vec = [0.0] * EMBED_DIM
 
-        db.execute(UPSERT, {"cid": cid, "emb": vec, "ver": version})
+        # ——— profile_text for auditing/debug ———
+        sections = []
+        if lines:
+            sections.append("CREDITS:\n- " + "\n- ".join(lines))
+        if interests:
+            sections.append("INTERESTS:\n- " + "\n- ".join(interests))
+        profile_text = "\n\n".join(sections) if sections else "(no data)"
+
+        # ——— UPSERT ———
+        db.execute(UPSERT, {"cid": cid, "emb": vec, "ptxt": profile_text})
+
     db.commit()

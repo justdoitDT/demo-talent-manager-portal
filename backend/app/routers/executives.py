@@ -354,6 +354,7 @@ def get_exec_companies(exec_id: str, db: Session = Depends(get_db)):
             literal("tv_network").label("company_type"),
             models.executives_to_tv_networks.c.status.label("status"),
             models.executives_to_tv_networks.c.last_modified.label("last_modified"),
+            models.executives_to_tv_networks.c.title.label("title"),
         )
         .select_from(
             models.executives_to_tv_networks.join(
@@ -371,6 +372,7 @@ def get_exec_companies(exec_id: str, db: Session = Depends(get_db)):
             literal("studio").label("company_type"),
             models.executives_to_studios.c.status.label("status"),
             models.executives_to_studios.c.last_modified.label("last_modified"),
+            models.executives_to_studios.c.title.label("title"),
         )
         .select_from(
             models.executives_to_studios.join(
@@ -388,6 +390,7 @@ def get_exec_companies(exec_id: str, db: Session = Depends(get_db)):
             literal("production_company").label("company_type"),
             models.executives_to_production_companies.c.status.label("status"),
             models.executives_to_production_companies.c.last_modified.label("last_modified"),
+            models.executives_to_production_companies.c.title.label("title"),
         )
         .select_from(
             models.executives_to_production_companies.join(
@@ -407,6 +410,7 @@ def get_exec_companies(exec_id: str, db: Session = Depends(get_db)):
             company_type=r.company_type,
             status=r.status,
             last_modified=r.last_modified,
+            title=getattr(r, "title", None),
         )
 
     current = [to_link(r) for r in rows if r.status == "Active"]

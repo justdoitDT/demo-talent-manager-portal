@@ -5,7 +5,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import "./Layout.css";
 
 const tabs = [
-  { label: "Tasks",      path: "/tasks"      },
+  // { label: "Tasks",      path: "/tasks"      },
   { label: "Managers",   path: "/managers"   },
   { label: "Creatives",  path: "/creatives"  },
   { label: "Projects",   path: "/projects"   },
@@ -13,7 +13,7 @@ const tabs = [
   { label: "Mandates",   path: "/mandates"   },
   { label: "Companies", path: "/companies" },
   { label: "Executives", path: "/executives" },
-  { label: "Buyers",     path: "/buyers"     },
+  // { label: "Buyers",     path: "/buyers"     },
 ] as const;
 
 export default function Layout({ children }: { children: React.ReactNode }) {

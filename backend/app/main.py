@@ -34,18 +34,36 @@ from .ai.recommend_client_for_project_need.router import (
 )
 
 
+DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+
 app = FastAPI(title="Manager Portal API")
 
 # ---- CORS configuration ----
 _frontend = os.getenv("FRONTEND_URL")
-_origins = [u for u in {_frontend, "http://localhost:3000"} if u]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+if DEMO_MODE:
+    # Mirror prod semantics so auth headers work
+    _origins = [u for u in {
+        _frontend,
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    } if u]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,      # not "*"
+        allow_credentials=True,      # must be true if you send Authorization
+        allow_methods=["*"],
+        allow_headers=["*"],         # includes "authorization"
+    )
+else:
+    _origins = [u for u in {_frontend, "http://localhost:3000"} if u]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Paths that any user may POST to without manager/admin guard
 PUBLIC_WRITE_PATHS = {
@@ -64,6 +82,12 @@ async def writer_guard(request: Request, call_next):
     • Validates the Bearer token via `_decode_supabase_jwt`.
     • Classifies roles via `_classify_roles`.
     """
+
+    # In demo mode, allow all writes.
+    if DEMO_MODE:
+        return await call_next(request)
+
+
     # Only guard mutating methods
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
         # Allow public write endpoints

@@ -5,6 +5,8 @@ import { animated, useTransition } from '@react-spring/web';
 import { ResizableBox, ResizeCallbackData } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import { usePane } from './PaneContext';
+import { useZItem } from '../ui/ZStack';
+
 import CreativePane from './panes/CreativePane';
 import ProjectPane from './panes/ProjectPane';
 import ExecutivePane from './panes/ExecutivePane';
@@ -16,10 +18,12 @@ import ExternalRepPane from './panes/ExternalRepPane';
 import CompanyPane from './panes/CompanyPane';
 
 
+
 export default function SlidingPane() {
   // const { payload, close, width, setWidth } = usePane();
   const { payload, width, setWidth } = usePane();
   const [paneTop, setPaneTop] = useState(0);
+  const { zIndex, focus } = useZItem('pane');
 
   // Recompute top edge so it hugs the bottom of the .nav bar, or 0 if scrolled past
   useEffect(() => {
@@ -50,13 +54,14 @@ export default function SlidingPane() {
     (style, pl) =>
       pl && (
         <animated.div
+          onPointerDown={focus}
           style={{
             ...style,
             position: 'fixed',
             top: paneTop,
             right: 0,
             bottom: 0,
-            zIndex: 2000,
+            zIndex,
           }}
         >
           <ResizableBox

@@ -295,7 +295,7 @@ export default function ScrapeImdbCreditsModal({
 
     fetchSSE(streamUrl, {
       headers,
-      credentials: 'include',
+      credentials: 'omit',
       signal: ctrl.signal,
       async onopen(res: Response) {
         const ct = res.headers.get('content-type') || '';

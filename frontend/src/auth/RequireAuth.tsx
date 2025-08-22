@@ -5,8 +5,9 @@ import { Navigate, Outlet } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 
+const DEMO = process.env.REACT_APP_DEMO_MODE === 'true';
 
-export default function RequireAuth() {
+function RequireAuthReal() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
 
@@ -26,7 +27,11 @@ export default function RequireAuth() {
     return () => { unsub?.(); };
   }, []);
 
-  if (loading) return null; // or a spinner
+  if (loading) return null;
   if (!session) return <Navigate to="/login" replace />;
   return <Outlet />;
+}
+
+export default function RequireAuth() {
+  return DEMO ? <Outlet /> : <RequireAuthReal />;
 }

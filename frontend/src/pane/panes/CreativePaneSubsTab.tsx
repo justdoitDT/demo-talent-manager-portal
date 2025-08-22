@@ -6,6 +6,7 @@ import React, {
 import api from '../../services/api';
 import { PanePayload } from '../PaneContext';
 import CreateSubModal from '../../modals/CreateSubModal';
+import { useGlobalModals } from '../../ui/GlobalModals';
 
 /* ───────────── label helpers ───────────── */
 const INTENT_LABEL: Record<string, string> = {
@@ -149,6 +150,9 @@ export default function CreativePaneSubsTab({ creativeId, onOpen }: Props) {
 
   /* create-sub modal */
   const [showCreate, setShowCreate] = useState(false);
+
+  /* AI rec modal */
+  const { openAIModal } = useGlobalModals();
 
   /* filters */
   const [projectQ, setProjectQ]           = useState('');
@@ -553,14 +557,25 @@ export default function CreativePaneSubsTab({ creativeId, onOpen }: Props) {
       `}</style>
 
 
-      {/* “Create New Sub” */}
-      <button
-        className="tab"
-        style={{ margin: '0 0 14px 0' }}
-        onClick={() => setShowCreate(true)}
-      >
-        Create New Sub
-      </button>
+      <div style={{ display:'flex', alignItems:'center', gap:8, margin: '0 0 14px 0' }}>
+
+        {/* “Create New Sub” */}
+        <button
+          className="tab"
+          onClick={() => setShowCreate(true)}
+        >
+          Create New Sub
+        </button>
+
+
+        {/* “AI Recommend Subs (to Project Needs)” */}
+        <button 
+          className="aiButton"
+          onClick={() => openAIModal(creativeId)}
+        >
+          AI: Recommend Projects
+        </button>
+      </div>
 
       <small style={{ display:'block', marginBottom:4 }}>
         Showing {paged.length} of {sorted.length}

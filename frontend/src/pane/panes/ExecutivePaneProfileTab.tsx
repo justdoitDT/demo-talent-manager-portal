@@ -19,6 +19,7 @@ interface ExecCompanyLink {
   company_type: CompanyType;
   status:       'Active' | 'Archived';
   last_modified:string;                  // ISO
+  title:        string | null;
 }
 
 interface ExecCompaniesPayload {
@@ -67,6 +68,11 @@ export default function ExecutivePaneProfileTab({
   const [confirmArchiveId, setConfirmArchiveId] = useState<string|null>(null);
   const [confirmDeleteId,  setConfirmDeleteId]  = useState<string|null>(null);
 
+  // title inline edit state
+  const [editingTitleKey, setEditingTitleKey] = useState<string|null>(null);
+  const [editingTitleVal, setEditingTitleVal] = useState<string>('');
+  const linkKey = (link: ExecCompanyLink) => `${link.status}:${link.company_id}`;
+
   // ---- data loaders
   const loadExecutive = useCallback(async () => {
     const r = await api.get<ExecutiveDetail>(`/executives/${executiveId}`);
@@ -108,6 +114,15 @@ export default function ExecutivePaneProfileTab({
   // ---- company link mutations
   const addOrActivateCompany = async (company_id: string) => {
     await api.post(`/executives/${executiveId}/companies`, { company_id });
+    await loadCompanies();
+  };
+
+  // ---- update title on a link
+  const updateCompanyTitle = async (company_id: string, next: string) => {
+    const cleaned = next.trim() || null;
+    await api.patch(`/executives/${executiveId}/companies/${company_id}`, { title: cleaned });
+    setEditingTitleKey(null);
+    setEditingTitleVal('');
     await loadCompanies();
   };
 
@@ -234,6 +249,7 @@ export default function ExecutivePaneProfileTab({
             <tr>
               <th style={labelCell}>Company</th>
               <th style={labelCell}>Company Type</th>
+              <th style={labelCell}>Title</th>
               <th style={labelCell}>Updated</th>
               <th style={labelCell}></th>
             </tr>
@@ -253,6 +269,42 @@ export default function ExecutivePaneProfileTab({
                     </span>
                   </td>
                   <td style={cell}>{companyTypeLabel(link.company_type)}</td>
+                  
+                  <td style={cell}>
+                    {editingTitleKey === linkKey(link) ? (
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <input
+                          type="text"
+                          value={editingTitleVal}
+                          onChange={e => setEditingTitleVal(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') updateCompanyTitle(link.company_id, editingTitleVal);
+                            if (e.key === 'Escape') { setEditingTitleKey(null); setEditingTitleVal(''); }
+                          }}
+                          style={{ flex:1, minWidth:0 }}
+                        />
+                        <button
+                          className="btn"
+                          onClick={() => updateCompanyTitle(link.company_id, editingTitleVal)}
+                          title="Save title"
+                        >Confirm</button>
+                        <button
+                          className="btn"
+                          onClick={() => { setEditingTitleKey(null); setEditingTitleVal(''); }}
+                        >Cancel</button>
+                      </div>
+                    ) : (
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <span>{link.title ?? NONE}</span>
+                        <button
+                          className="btn"
+                          style={{ marginLeft:8 }}
+                          onClick={() => { setEditingTitleKey(linkKey(link)); setEditingTitleVal(link.title ?? ''); }}
+                        >Edit</button>
+                      </div>
+                    )}
+                  </td>
+
                   <td style={cell}>{new Date(link.last_modified).toLocaleString()}</td>
                   <td style={{ ...cell, width:140 }}>
                     {!confirming ? (
@@ -341,6 +393,7 @@ export default function ExecutivePaneProfileTab({
             <tr>
               <th style={labelCell}>Company</th>
               <th style={labelCell}>Company Type</th>
+              <th style={labelCell}>Title</th>
               <th style={labelCell}>Updated</th>
               <th style={labelCell}></th>
             </tr>
@@ -360,6 +413,42 @@ export default function ExecutivePaneProfileTab({
                     </span>
                   </td>
                   <td style={cell}>{companyTypeLabel(link.company_type)}</td>
+                  
+                  <td style={cell}>
+                    {editingTitleKey === linkKey(link) ? (
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <input
+                          type="text"
+                          value={editingTitleVal}
+                          onChange={e => setEditingTitleVal(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') updateCompanyTitle(link.company_id, editingTitleVal);
+                            if (e.key === 'Escape') { setEditingTitleKey(null); setEditingTitleVal(''); }
+                          }}
+                          style={{ flex:1, minWidth:0 }}
+                        />
+                        <button
+                          className="btn"
+                          onClick={() => updateCompanyTitle(link.company_id, editingTitleVal)}
+                          title="Save title"
+                        >Confirm</button>
+                        <button
+                          className="btn"
+                          onClick={() => { setEditingTitleKey(null); setEditingTitleVal(''); }}
+                        >Cancel</button>
+                      </div>
+                    ) : (
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <span>{link.title ?? NONE}</span>
+                        <button
+                          className="btn"
+                          style={{ marginLeft:8 }}
+                          onClick={() => { setEditingTitleKey(linkKey(link)); setEditingTitleVal(link.title ?? ''); }}
+                        >Edit</button>
+                      </div>
+                    )}
+                  </td>
+
                   <td style={cell}>{new Date(link.last_modified).toLocaleString()}</td>
                   <td style={{ ...cell, width:140 }}>
                     {!confirming ? (

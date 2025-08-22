@@ -4,25 +4,34 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
-
 type Mode = 'signin' | 'signup';
+const DEMO = process.env.REACT_APP_DEMO_MODE === 'true';
 
-export default function AuthPage() {
+function DemoAuth() {
+  return (
+    <div style={{ maxWidth: 420, margin: '60px auto', padding: 16 }}>
+      <h2>Demo mode</h2>
+      <p>No login required.</p>
+      <p><Link className="btn" to="/managers">Enter the demo</Link></p>
+    </div>
+  );
+}
+
+function AuthPageReal() {
   const [mode, setMode] = useState<Mode>('signin');
 
   const [email, setEmail] = useState('');
   const [pw,   setPw]  = useState('');
-  const [pw2,  setPw2] = useState('');           // confirm-password
+  const [pw2,  setPw2] = useState(''); // confirm-password
 
   const [msg,  setMsg]  = useState<string | null>(null);
   const [err,  setErr]  = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [sp] = useSearchParams();
-  const navigate    = useNavigate();
-  const redirectTo  = sp.get('redirect') || '/';
+  const navigate   = useNavigate();
+  const redirectTo = sp.get('redirect') || '/';
 
-  /* ───────── helpers ───────── */
   const formReady =
     email.trim() !== '' &&
     pw.trim()    !== '' &&
@@ -30,7 +39,6 @@ export default function AuthPage() {
 
   useEffect(() => { setErr(null); setMsg(null); }, [mode]);
 
-  /* ───────── submit ───────── */
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null); setMsg(null);
@@ -55,8 +63,8 @@ export default function AuthPage() {
           email,
           password: pw,
           options: {
-              emailRedirectTo:
-                `${window.location.origin}/auth/callback?email=${encodeURIComponent(email)}`,
+            emailRedirectTo:
+              `${window.location.origin}/auth/callback?email=${encodeURIComponent(email)}`,
           },
         });
         if (error) throw error;
@@ -70,14 +78,12 @@ export default function AuthPage() {
     }
   };
 
-  /* ───────── render ───────── */
   return (
     <div style={{ maxWidth: 420, margin: '60px auto', padding: 16 }}>
       <h2 style={{ marginTop: 0 }}>
         {mode === 'signin' ? 'Log in' : 'Create account'}
       </h2>
 
-      {/* mode toggle */}
       <div style={{ marginBottom: 12 }}>
         <button
           className="btn"
@@ -112,7 +118,6 @@ export default function AuthPage() {
           />
         </label>
 
-        {/* password */}
         <label>
           <div>Password</div>
           <input
@@ -125,7 +130,6 @@ export default function AuthPage() {
           />
         </label>
 
-        {/* confirm-password only on signup */}
         {mode === 'signup' && (
           <label>
             <div>Confirm password</div>
@@ -140,16 +144,8 @@ export default function AuthPage() {
           </label>
         )}
 
-        <button
-          className="btn"
-          type="submit"
-          disabled={busy || !formReady}
-        >
-          {busy
-            ? 'Please wait…'
-            : mode === 'signin'
-              ? 'Log in'
-              : 'Sign up'}
+        <button className="btn" type="submit" disabled={busy || !formReady}>
+          {busy ? 'Please wait…' : mode === 'signin' ? 'Log in' : 'Sign up'}
         </button>
 
         {mode === 'signin' && (
@@ -160,4 +156,8 @@ export default function AuthPage() {
       </form>
     </div>
   );
+}
+
+export default function AuthPage() {
+  return DEMO ? <DemoAuth /> : <AuthPageReal />;
 }

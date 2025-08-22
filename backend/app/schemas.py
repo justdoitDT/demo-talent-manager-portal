@@ -654,6 +654,7 @@ class ExecCompanyLink(BaseModel):
     company_type: Literal["tv_network", "studio", "production_company"]
     status: Literal["Active", "Archived"]
     last_modified: datetime
+    title: Optional[str] = None
 
     model_config = {"from_attributes": False}
 

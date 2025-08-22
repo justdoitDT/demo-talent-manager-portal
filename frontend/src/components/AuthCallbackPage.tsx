@@ -7,8 +7,10 @@ import { supabase } from '../services/supabase';
 
 export default function AuthCallbackPage() {
   const nav = useNavigate();
+  const DEMO = process.env.REACT_APP_DEMO_MODE === 'true';
 
   useEffect(() => {
+    if (DEMO) { nav('/', { replace: true }); return; }
     (async () => {
       const qs   = new URLSearchParams(window.location.search);
       const code = qs.get('code');
@@ -36,7 +38,7 @@ export default function AuthCallbackPage() {
         nav('/', { replace: true });
       }
     })();
-  }, [nav]);
+  }, [nav, DEMO]);
 
   return null;
 }
