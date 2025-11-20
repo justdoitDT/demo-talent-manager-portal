@@ -582,7 +582,7 @@ export default function RagChatPage() {
       {/* Main panel */}
       <main className="ragchat-main">
         <header className="ragchat-main-header">
-          <div className="ragchat-main-model-name">RDE AI Assistant</div>
+          <div className="ragchat-main-model-name">RAG AI Assistant</div>
           <div className="ragchat-main-model-sub">
             Powered by your database + OpenAI
           </div>
