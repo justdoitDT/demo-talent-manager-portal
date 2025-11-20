@@ -17,3 +17,4 @@ email-validator
 python-jose[cryptography]
 requests
 reportlab
+asyncpg

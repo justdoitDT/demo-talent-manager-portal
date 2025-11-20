@@ -1,0 +1,604 @@
+/* Root layout */
+.ragchat-root {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background: #f7f7f8;
+  color: #111827;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden; /* prevent the whole page from scrolling */
+}
+
+/* Sidebar */
+.ragchat-sidebar {
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+  max-width: 480px;
+}
+
+.ragchat-sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  gap: 6px;
+}
+
+.rg-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.rg-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.rg-btn-ghost {
+  background: #f9fafb;
+}
+
+.rg-btn-full {
+  width: 100%;
+}
+
+.ragchat-sidebar-section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 4px;
+}
+
+.ragchat-sidebar-section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+}
+
+.ragchat-archived-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.ragchat-archived-toggle input {
+  margin: 0;
+}
+
+.ragchat-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px 12px;
+}
+
+.ragchat-sidebar-empty {
+  font-size: 13px;
+  color: #6b7280;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+/* Conversation items */
+
+.ragchat-convo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.ragchat-convo-item:hover {
+  background: #e5e7eb;
+}
+
+.ragchat-convo-item--active {
+  background: #111827;
+  color: #f9fafb;
+}
+
+.ragchat-convo-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ragchat-convo-title {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ragchat-convo-meta {
+  margin-top: 3px;
+  font-size: 11px;
+  color: inherit;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ragchat-convo-archived-pill {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  font-size: 10px;
+}
+
+/* Convo menu */
+
+.ragchat-convo-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ragchat-convo-menu-button {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  color: inherit;
+}
+
+.ragchat-convo-menu-button:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.ragchat-convo-menu-popover {
+  position: absolute;
+  top: 24px;
+  right: 0;
+  min-width: 150px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+  padding: 4px 0;
+  z-index: 20;
+}
+
+.ragchat-convo-menu-item {
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ragchat-convo-menu-item:hover {
+  background: #f3f4f6;
+}
+
+.ragchat-convo-menu-delete {
+  color: #b91c1c;
+}
+
+/* Sidebar resizer */
+
+.ragchat-sidebar-resizer {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  border-right: 1px solid #e5e7eb;
+}
+
+.ragchat-sidebar-resizer:hover {
+  background: #e5e7eb;
+}
+
+/* Main panel */
+
+.ragchat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1120px;
+  margin: 0 auto;
+  overflow: hidden; /* no page scroll; messages area will scroll instead */
+}
+
+.ragchat-main-header {
+  padding: 14px 24px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f7f7f8;
+  position: relative;
+}
+
+.ragchat-main-model-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ragchat-main-model-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* thinking strip */
+
+.ragchat-thinking {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.ragchat-thinking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  animation: ragchat-pulse 1.5s infinite;
+}
+
+@keyframes ragchat-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  }
+  70% {
+    transform: scale(1.5);
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  }
+}
+
+/* Messages */
+
+.ragchat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+  background: #ffffff;
+}
+
+.ragchat-empty-state {
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+}
+
+.ragchat-empty-state h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* message rows */
+
+.ragchat-msg-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ragchat-msg-row--assistant {
+  justify-content: flex-start;
+}
+
+.ragchat-msg-row--user {
+  justify-content: flex-end;
+}
+
+.ragchat-msg-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ragchat-msg-row--user .ragchat-msg-avatar {
+  background: #0f172a;
+  color: #f9f9fb;
+}
+
+.ragchat-msg-bubble {
+  max-width: 720px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ragchat-msg-bubble--assistant {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.ragchat-msg-bubble--user {
+  background: #0f172a;
+  color: #f9fafb;
+}
+
+.ragchat-msg-bubble--error {
+  border-color: #ef4444;
+}
+
+.rg-msg-paragraph {
+  margin: 4px 0;
+}
+
+/* code blocks */
+
+.rg-msg-code {
+  background: #020617;
+  color: #e5e7eb;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  margin: 6px 0;
+}
+
+/* tables */
+
+.rg-msg-table-wrapper {
+  margin: 6px 0;
+  overflow-x: auto;
+}
+
+.rg-msg-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 240px;
+}
+
+.rg-msg-table th,
+.rg-msg-table td {
+  border: 1px solid #e5e7eb;
+  padding: 4px 8px;
+}
+
+.rg-msg-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+/* assistant thinking dots inside bubble */
+
+.ragchat-msg-thinking-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ragchat-msg-thinking-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #9ca3af;
+  animation: ragchat-dots 1s infinite ease-in-out;
+}
+
+.ragchat-msg-thinking-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.ragchat-msg-thinking-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes ragchat-dots {
+  0%,
+  80%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+/* Composer */
+
+.ragchat-composer-wrapper {
+  padding: 12px 24px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: radial-gradient(circle at center, #f9fafb, #f3f4f6);
+}
+
+.ragchat-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.ragchat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.4;
+  max-height: 160px;
+}
+
+.ragchat-send-btn {
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.ragchat-send-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid #d1d5db;
+  border-top-color: #111827;
+  animation: ragchat-spin 0.8s linear infinite;
+}
+
+@keyframes ragchat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ragchat-composer-hint {
+  margin: 6px auto 0;
+  max-width: 720px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.ragchat-composer-hint kbd {
+  background: #e5e7eb;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 10px;
+}
+
+
+/* Markdown typography inside assistant bubbles */
+
+.ragchat-markdown {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Headings */
+
+.rg-md-h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.rg-md-h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 10px 0 6px;
+}
+
+.rg-md-h3 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 12px 0 4px;
+}
+
+.rg-md-h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 0 4px;
+}
+
+/* Paragraphs */
+
+.rg-md-p {
+  margin: 4px 0;
+}
+
+/* Lists */
+
+.rg-md-ul,
+.rg-md-ol {
+  margin: 4px 0 4px 1.25rem;
+  padding-left: 1.25rem;
+}
+
+.rg-md-li {
+  margin: 2px 0;
+}
+
+/* Inline emphasis */
+
+.rg-md-strong {
+  font-weight: 600;
+}
+
+.rg-md-em {
+  font-style: italic;
+}
+
+/* Inline code */
+
+.rg-md-inline-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #f3f4f6;
+}
+
+
+/* Thinking updates */
+
+.ragchat-msg-thinking {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.ragchat-msg-thinking-text {
+  font-size: 0.85rem;
+  color: #6b7280; /* gray-500 */
+}
+

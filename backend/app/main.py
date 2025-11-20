@@ -27,7 +27,8 @@ from .routers import (
     external_reps,
     companies,
     mandates,
-    imdb_scrape
+    imdb_scrape,
+    rag_chat,
 )
 from .ai.recommend_client_for_project_need.router import (
     router as recommend_client_for_project_need_router,
@@ -157,6 +158,8 @@ app.include_router(
     dependencies=team_or_higher,
 )
 app.include_router(imdb_scrape.router)
+app.include_router(rag_chat.router)
+
 
 @app.get("/health")
 def health():

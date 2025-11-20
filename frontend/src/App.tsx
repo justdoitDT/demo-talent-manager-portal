@@ -4,6 +4,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import Layout from './components/Layout';
+import RagChatPage from './components/RagChatPage';
 import TasksPage from './components/TasksPage';
 import ManagersPage from './components/ManagersPage';
 import CreativesPage from './components/CreativesPage';
@@ -42,6 +43,7 @@ export default function App() {
                   <Route path="/" element={<Navigate to="/managers" replace />} />
                   {/* protected app */}
                   <Route element={<RequireAuth />}>
+                    <Route path="/rag_chat" element={<RagChatPage />} />
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/managers" element={<ManagersPage />} />
                     <Route path="/creatives" element={<CreativesPage />} />

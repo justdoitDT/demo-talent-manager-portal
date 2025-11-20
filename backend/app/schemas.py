@@ -25,6 +25,10 @@ class ManagerMini(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class ManagerUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+
 class CreativeProjectRole(BaseModel):
     creative_id: str
     creative_name: str

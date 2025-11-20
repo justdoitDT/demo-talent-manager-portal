@@ -11,3 +11,58 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Tabs / buttons */
+  .tab { @apply cursor-pointer px-4 py-2 bg-white text-black no-underline rounded transition; }
+  .tab:hover { @apply bg-black text-white scale-110 shadow; }
+  .tab.active { @apply bg-black text-white; }
+  .tab:disabled { @apply opacity-50 pointer-events-none cursor-default; }
+
+  .btn { @apply px-4 py-2 bg-white text-black rounded border-0 cursor-pointer transition-transform duration-200 shadow-none; }
+  .btn:hover, .btn:focus { @apply bg-black text-white scale-110 shadow; }
+  .btn.active { @apply bg-black text-white; }
+  .btn.confirm-remove { @apply bg-red-300 text-black font-bold; }
+
+  .aiButton { @apply cursor-pointer px-4 py-2 rounded bg-white text-[#046A38] border border-[#004c54] transition; }
+  .aiButton:hover { @apply bg-[#046A38] text-white scale-110 shadow; }
+
+  .clickable { @apply cursor-pointer text-[#046A38]; }
+  .clickable:hover { @apply font-bold text-[#046A38]; }
+
+  .menu-item { @apply cursor-pointer p-2 bg-white text-black; }
+  .menu-item:hover, .menu-item:focus { @apply bg-black text-white; }
+
+  .glow { @apply outline outline-2 outline-red-600 outline-offset-1; }
+
+  .dd-option { @apply px-2 py-1.5 cursor-pointer; }
+  .dd-option:hover { @apply bg-black text-white; }
+  .dd-grey { @apply text-gray-500; }
+
+  /* Toggle switch (structure: <label class="switch"><input type="checkbox"/><span class="slider"></span></label>) */
+  .switch { @apply relative inline-block w-12 h-6; }
+  .switch input { @apply opacity-0 w-0 h-0; }
+  .slider { @apply absolute inset-0 cursor-pointer bg-gray-300 transition rounded-full; }
+  .slider:before { content:""; @apply absolute h-5 w-5 left-[2px] bottom-[2px] bg-white rounded-full transition; }
+  .switch input:checked + .slider { @apply bg-green-500; }
+  .switch input:checked + .slider:before { transform: translateX(24px); }
+
+  /* Spinners */
+  .spinner { @apply flex items-center justify-center p-10; }
+  .spinner > div { @apply w-8 h-8 border-4 border-gray-300 rounded-full border-t-[#004c54] animate-spin; }
+
+  .mini-spinner { @apply inline-block align-middle ml-1 w-3.5 h-3.5 border-2 border-gray-300 rounded-full border-t-[#004c54] animate-spin; }
+}
+
+/* Optional: sticky h1 inside main, mirroring your old rule */
+main > h1 {
+  position: sticky;
+  top: calc(0.5rem + 2rem); /* nav py-2 (~0.5rem) + approx tab height (~2rem) */
+  margin: 0;
+  padding: 0.75rem 0;
+  background: #fff;
+  z-index: 900;
+}
